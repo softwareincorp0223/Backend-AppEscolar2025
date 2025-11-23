@@ -1,0 +1,10 @@
+import express from "express";
+import { getAll, getById, createOne, updateOne, deleteOne } from "../controllers/sesiones_appController.js";
+const router = express.Router();
+router.get("/", getAll);
+router.get("/:id", getById);
+router.post("/", createOne);
+router.put("/:id", updateOne);
+router.delete("/:id", deleteOne);
+export const basePath = "/api/sesiones_app";
+export default router;

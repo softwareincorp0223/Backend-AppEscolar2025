@@ -1,0 +1,11 @@
+import express from "express";
+import generarIdMiddleware from "../middleware/generarIdMiddleware.js";
+import { getAll, getById, createOne, updateOne, deleteOne } from "../controllers/extracurricularController.js";
+const router = express.Router();
+router.get("/", getAll);
+router.get("/:id", getById);
+router.post("/", generarIdMiddleware, createOne);
+router.put("/:id", updateOne);
+router.delete("/:id", deleteOne);
+export const basePath = "/api/extracurricular";
+export default router;
