@@ -41,12 +41,15 @@ const allowedOrigins = [process.env.FRONTEND_URL, process.env.BACKEND_URL];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    const isAllowed = allowedOrigins.some(o => origin?.startsWith(o));
+
+    if (!origin || isAllowed) {
       callback(null, true);
     } else {
       console.warn("❌ CORS bloqueado para:", origin);
       callback(new Error("No permitido por CORS"));
     }
+
   },
   credentials: true,
 };

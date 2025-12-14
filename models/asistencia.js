@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 import Alumno from "./alumno.js";
+import Usuario from "./Usuario.js";
 
 const Asistencia = sequelize.define("Asistencia", {
   id_asistencia: { type: DataTypes.STRING(20), primaryKey: true, allowNull: true },
@@ -13,6 +14,9 @@ const Asistencia = sequelize.define("Asistencia", {
 }, { tableName: "asistencia", timestamps: false });
 
 Asistencia.belongsTo(Alumno, { foreignKey: "sid_alumno" });
+Asistencia.belongsTo(Usuario, { foreignKey: "sid_usuario" });
+
+
 Alumno.hasMany(Asistencia, { foreignKey: "sid_alumno" });
 
 export default Asistencia;
