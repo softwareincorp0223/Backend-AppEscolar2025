@@ -1,0 +1,17 @@
+import { DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
+
+const VistaAsignacionMaterias = sequelize.define("VistaAsignacionMaterias", {
+  id_asignar_materia: { type: DataTypes.STRING(20), primaryKey: true, },
+  sid_instituto: { type: DataTypes.STRING(20), },
+  nombre_nivel: { type: DataTypes.STRING(150), },
+  nombre_grado: { type: DataTypes.STRING(150), },
+  nombre_grupo: { type: DataTypes.STRING(150), },
+  nombre_materia: { type: DataTypes.STRING(150), },
+  nombre_profesor: { type: DataTypes.STRING(150), },
+  apellido_profesor: { type: DataTypes.STRING(150), },
+  fecha_creacion: { type: DataTypes.DATE, },
+},
+  { tableName: "vista_asignacion_materias", timestamps: false, freezeTableName: true, });
+
+export default VistaAsignacionMaterias;
