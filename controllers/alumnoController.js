@@ -23,6 +23,7 @@ export const alumnosPadres = async (req, res) => {
 
 export const getById = crud.getById;
 export const createOne = async (req, res) => {
+  
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });
   req.body = value;

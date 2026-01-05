@@ -11,5 +11,4 @@ const Extracurricular = sequelize.define("Extracurricular", {
 
 Extracurricular.belongsTo(Instituto, { foreignKey: "sid_instituto" });
 
-
 export default Extracurricular;

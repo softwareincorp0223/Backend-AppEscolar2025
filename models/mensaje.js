@@ -1,5 +1,12 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
+import Instituto from "./instituto.js"
+import Alumno from "./alumno.js";
+import Nivel from "./nivel.js";
+import Grado from "./grado.js";
+import Grupo from "./Grupo.js";
+import Tipo_mensaje from "./tipo_mensaje.js"
+import Extracurricular from "./extracurricular.js";
 
 const Mensaje = sequelize.define("Mensaje", {
   id_mensaje: { type: DataTypes.STRING(20), primaryKey: true, allowNull: true },
@@ -25,5 +32,11 @@ const Mensaje = sequelize.define("Mensaje", {
   eliminado: { type: DataTypes.STRING(20),  allowNull: false },
   sid_instituto: { type: DataTypes.STRING(20),  allowNull: true }
 }, { tableName: "mensaje", timestamps: false });
+
+Mensaje.belongsTo(Instituto, { foreignKey: "sid_instituto" });
+Mensaje.belongsTo(Alumno, { foreignKey: "sid_alumno" });
+Mensaje.belongsTo(Nivel, { foreignKey: "sid_nivel" });
+Mensaje.belongsTo(Grado, { foreignKey: "sid_grado" });
+Mensaje.belongsTo(Tipo_mensaje, { foreignKey: "sid_tipo" });
 
 export default Mensaje;
