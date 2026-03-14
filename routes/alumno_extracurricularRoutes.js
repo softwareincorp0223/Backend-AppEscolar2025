@@ -1,8 +1,9 @@
 import express from "express";
 import generarIdMiddleware from "../middleware/generarIdMiddleware.js";
-import { getAll, getById, createOne, updateOne, deleteOne } from "../controllers/alumno_extracurricularController.js";
+import { getAll, getById, createOne, updateOne, deleteOne,getAllExcel } from "../controllers/alumno_extracurricularController.js";
 const router = express.Router();
 router.get("/", getAll);
+router.get("/excel/:sid_instituto", getAllExcel);
 router.get("/:id", getById);
 // router.post("/", createOne);
 router.post("/", generarIdMiddleware, createOne);
