@@ -18,5 +18,6 @@ const Seguimiento = sequelize.define("Seguimiento", {
 
 Seguimiento.belongsTo(Alumno, { foreignKey: "sid_alumno" });
 Seguimiento.belongsTo(Usuario, { foreignKey: "sid_usuario" });
+Alumno.hasMany(Seguimiento, { foreignKey: "sid_alumno" });
 
 export default Seguimiento;

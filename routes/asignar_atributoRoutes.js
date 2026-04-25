@@ -1,9 +1,11 @@
 import express from "express";
-import { getAll, getById, createOne, updateOne, deleteOne } from "../controllers/asignar_atributoController.js";
+import generarIdMiddleware from "../middleware/generarIdMiddleware.js";
+import { getAll, getById, createOne, updateOne, deleteOne, getAllExcel } from "../controllers/asignar_atributoController.js";
 const router = express.Router();
 router.get("/", getAll);
+router.get("/excel/:sid_instituto", getAllExcel);
 router.get("/:id", getById);
-router.post("/", createOne);
+router.post("/", generarIdMiddleware, createOne);
 router.put("/:id", updateOne);
 router.delete("/:id", deleteOne);
 export const basePath = "/api/asignar_atributo";
