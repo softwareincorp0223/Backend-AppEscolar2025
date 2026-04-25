@@ -33,8 +33,9 @@ const VistaMensajes = sequelize.define(
       type: DataTypes.BOOLEAN,
     },
 
-    instituto_id: {
+    sid_instituto: { 
       type: DataTypes.STRING(20),
+      field: "instituto_id",
     },
 
     nombre_tipo: {

@@ -17,8 +17,9 @@ const VistaHistorialMensajes = sequelize.define(
       type: DataTypes.DATE,
     },
 
-    id_instituto: {
+    sid_instituto: { 
       type: DataTypes.STRING(20),
+      field: "id_instituto",
     },
 
     nombre_instituto: {

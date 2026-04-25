@@ -7,6 +7,7 @@ const crud = createCRUD(AsignarMateria, "id_asignar_materia");
 export const getAll = crud.getAll;
 export const getById = crud.getById;
 export const createOne = async (req, res) => {
+  console.log("Validating request body:", req.body);
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });
   req.body = value;
