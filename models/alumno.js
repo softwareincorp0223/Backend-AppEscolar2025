@@ -3,6 +3,7 @@ import sequelize from "../config/database.js";
 import Nivel from "./nivel.js"
 import Grado from "./grado.js"
 import Grupo from "./Grupo.js"
+import Instituto from "./instituto.js";
 
 const Alumno = sequelize.define("Alumno", {
   id_alumno: { type: DataTypes.STRING(20), primaryKey: true, allowNull: true },
@@ -26,9 +27,11 @@ const Alumno = sequelize.define("Alumno", {
 Alumno.belongsTo(Nivel, { foreignKey: "sid_nivel" });
 Alumno.belongsTo(Grado, { foreignKey: "sid_grado" });
 Alumno.belongsTo(Grupo, { foreignKey: "sid_grupo" });
+Alumno.belongsTo(Instituto, {foreignKey: "sid_instituto"});
 
 Nivel.hasMany(Alumno, { foreignKey: "sid_nivel" });
 Grado.hasMany(Alumno, { foreignKey: "sid_grado" });
 Grupo.hasMany(Alumno, { foreignKey: "sid_grupo" });
+Instituto.hasMany(Alumno, { foreignKey: "sid_instituto" });
 
 export default Alumno;

@@ -19,4 +19,6 @@ const Instituto = sequelize.define("Instituto", {
   sid_usuario: { type: DataTypes.STRING(20),  allowNull: true }
 }, { tableName: "instituto", timestamps: false });
 
+
+
 export default Instituto;

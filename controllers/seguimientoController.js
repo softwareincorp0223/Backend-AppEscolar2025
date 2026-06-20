@@ -13,7 +13,11 @@ export const createOne = async (req, res) => {
   return crud.createOne(req, res);
 };
 export const updateOne = async (req, res) => {
-  const { error, value } = schema.validate(req.body, { abortEarly: false });
+  const { error, value } = schema.validate(req.body, {
+    abortEarly: false,
+    presence: "optional"
+  });
+  
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });
   req.body = value;
   return crud.updateOne(req, res);

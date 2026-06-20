@@ -7,6 +7,7 @@ import Grado from "../models/grado.js";
 import Grupo from "../models/Grupo.js";
 import Calificaciones from "../models/calificaciones.js";
 import Materia from "../models/materia.js";
+import Instituto from "../models/instituto.js";
 
 const crud = createCRUD(Evaluacion, "id_evaluacion");
 
@@ -15,10 +16,121 @@ export const getAll = crud.getAll;
 export const getEvaluacion = async (req, res) => {
   try {
     const { sid_instituto } = req.params;
+    // const { ciclo } = req.query; // opcional para filtrar
+
+    const data = await Alumno.findAll({
+      where: { sid_instituto },
+
+      attributes: ["id_alumno","nombre", "apellido", "matricula"],
+
+      include: [
+        {
+          model: Evaluacion,
+          attributes: [
+            "id_evaluacion",
+            "promedio_general",
+            "promedio_final",
+            "ciclo",
+            "fecha_registro"
+          ],
+          required: false,
+          // where: ciclo ? { ciclo } : undefined // filtro por ciclo
+        },
+        {
+          model: Nivel,
+          attributes: ["nombre"]
+        },
+        {
+          model: Grado,
+          attributes: ["nombre"]
+        },
+        {
+          model: Grupo,
+          attributes: ["nombre"]
+        }
+      ],
+
+      // 👇 IMPORTANTE: quitar raw para que agrupe bien
+      raw: false,
+      nest: true
+    });
+
+    return res.json(data);
+
+  } catch (error) {
+    console.error("[getEvaluacion]", error);
+    return res.status(500).json({ error: "Error al obtener datos" });
+  }
+};
+
+// export const getEvaluacion = async (req, res) => {
+//   try {
+//     const { sid_instituto } = req.params;
+
+//     const data = await Evaluacion.findAll({
+
+//       include: [
+//         {
+//           model: Alumno,
+//           attributes: [
+//             "nombre",
+//             "apellido",
+//             "matricula"
+//           ],
+//           required: true,
+//           where: { sid_instituto },
+
+//           include: [
+//             {
+//               model: Nivel,
+//               attributes: ["nombre"],
+//               required: false
+//             },
+//             {
+//               model: Grado,
+//               attributes: ["nombre"],
+//               required: false
+//             },
+//             {
+//               model: Grupo,
+//               attributes: ["nombre"],
+//               required: false
+//             }
+//           ]
+//         }
+//       ],
+
+//       raw: true,
+//       nest: true,
+//       subQuery: false
+//     });
+
+//     return res.json(data);
+
+//   } catch (error) {
+//     console.error("[getEvaluacion]", error);
+//     return res.status(500).json({ error: "Error al obtener datos" });
+//   }
+// };
+
+export const getAllExcel = async (req, res) => {
+  try {
+    const { sid_instituto } = req.params;
 
     const data = await Evaluacion.findAll({
 
       include: [
+        {
+          model: Calificaciones,
+          required: true,
+          include: [
+            {
+              model: Materia,
+              as: "Materia",
+              required: true,
+            },
+          ],
+        },
         {
           model: Alumno,
           attributes: [
@@ -57,62 +169,72 @@ export const getEvaluacion = async (req, res) => {
     return res.json(data);
 
   } catch (error) {
-    console.error("[getEvaluacion]", error);
+    console.error("[getAllExcel]", error);
     return res.status(500).json({ error: "Error al obtener datos" });
   }
 };
 
-export const getAllExcel = async (req, res) => {
+export const getCalificacionPdf = async (req, res) => {
   try {
-    const { sid_instituto } = req.params;
+    const { id_alumno } = req.params;
+    // const { ciclo } = req.query; // opcional para filtrar
 
-    const data = await Evaluacion.findAll({
+    const data = await Alumno.findAll({
+      where: { id_alumno },
 
-      
+      attributes: ["nombre", "apellido", "matricula"],
+
       include: [
         {
-          model:Calificaciones,
-          required: true,
-          include:[
-            {
-              model:Materia,
-              required: true,
-            },
-          ],
-        },
-        {
-          model: Alumno,
+          model: Instituto,
           attributes: [
             "nombre",
-            "apellido",
-            "matricula"
+            "logo",
           ],
-          required: true,
-          where: { sid_instituto },
-
+          required: false,
+        },
+        {
+          model: Evaluacion,
+          attributes: [
+            "id_evaluacion",
+            "promedio_general",
+            "promedio_final",
+            "ciclo",
+            "fecha_registro"
+          ],
+          required: false,
           include: [
             {
-              model: Nivel,
-              attributes: ["nombre"],
-              required: false
+              model: Calificaciones,
+              required: true,
+              include: [
+                {
+                  model: Materia,
+                  as: "Materia",
+                  required: true,
+                },
+              ],
             },
-            {
-              model: Grado,
-              attributes: ["nombre"],
-              required: false
-            },
-            {
-              model: Grupo,
-              attributes: ["nombre"],
-              required: false
-            }
-          ]
+          ],
+          // where: ciclo ? { ciclo } : undefined // filtro por ciclo
+        },
+        {
+          model: Nivel,
+          attributes: ["nombre"]
+        },
+        {
+          model: Grado,
+          attributes: ["nombre"]
+        },
+        {
+          model: Grupo,
+          attributes: ["nombre"]
         }
       ],
 
-      raw: true,
-      nest: true,
-      subQuery: false
+      // 👇 IMPORTANTE: quitar raw para que agrupe bien
+      raw: false,
+      nest: true
     });
 
     return res.json(data);

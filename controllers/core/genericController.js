@@ -372,16 +372,61 @@ export default function createCRUD(Model, pkField = "id") {
     },
 
     // Actualizar por PK (req.body validado si corresponde)
+    // updateOne: async (req, res) => {
+    //   try {
+    //     const id = req.params.id;
+    //     const item = await Model.findByPk(id);
+    //     if (!item) return res.status(404).json({ error: "Not found" });
+    //     await item.update(req.body);
+    //     return res.json(item);
+    //   } catch (err) {
+    //     console.error("[updateOne]", err);
+    //     return res.status(500).json({ error: "Server error", details: err.message });
+    //   }
+    // },
+
     updateOne: async (req, res) => {
       try {
         const id = req.params.id;
+        const { ids, idField, ...data } = req.body;
+
+        // Actualización masiva
+        if (Array.isArray(ids) && ids.length > 0) {
+
+          const [updated] = await Model.update(
+            data,
+            {
+              where: {
+                [idField]: ids
+              }
+            }
+          );
+
+          return res.json({
+            message: `${updated} registros actualizados`
+          });
+        }
+
+        // Actualización individual
         const item = await Model.findByPk(id);
-        if (!item) return res.status(404).json({ error: "Not found" });
-        await item.update(req.body);
+
+        if (!item) {
+          return res.status(404).json({
+            error: "Not found"
+          });
+        }
+
+        await item.update(data);
+
         return res.json(item);
+
       } catch (err) {
         console.error("[updateOne]", err);
-        return res.status(500).json({ error: "Server error", details: err.message });
+
+        return res.status(500).json({
+          error: "Server error",
+          details: err.message
+        });
       }
     },
 

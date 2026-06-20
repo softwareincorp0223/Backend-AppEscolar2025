@@ -13,7 +13,7 @@ const Calificaciones = sequelize.define("Calificaciones", {
 
 Calificaciones.belongsTo(Evaluacion, { foreignKey: "sid_evaluacion" });
 Evaluacion.hasMany(Calificaciones, {foreignKey: "sid_evaluacion"});
-Calificaciones.belongsTo(Materia, {foreignKey: "sid_materia"});
+Calificaciones.belongsTo(Materia, {as: "Materia", foreignKey: "sid_materia"});
 Materia.hasMany(Calificaciones, {foreignKey: "sid_materia"});
 
 export default Calificaciones;
