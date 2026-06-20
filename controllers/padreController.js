@@ -12,12 +12,10 @@ export const getAll = async (req, res) => {
     const originalJson = res.json.bind(res);
 
     res.json = (data) => {
-      // 🔥 convertir a objeto plano
       let parsed = Array.isArray(data)
         ? data.map((item) => item.toJSON ? item.toJSON() : item)
         : data;
 
-      // 🔥 aplicar encrypt a TODOS
       if (Array.isArray(parsed)) {
         parsed = parsed.map((item) => {
           if (item.codigo_qr) {

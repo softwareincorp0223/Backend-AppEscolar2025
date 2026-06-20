@@ -169,83 +169,6 @@ export default function createCRUD(Model, pkField = "id") {
           Object.assign(where, mapped);
         }
 
-        // 3) Includes dinámicos (joins)
-        // let include = [];
-        // if (rawInclude) {
-        //   const models = rawInclude.split(",").map(m => m.trim());
-
-        //   for (const modelName of models) {
-        //     const RelatedModel = Model.sequelize.models[modelName];
-
-        //     if (RelatedModel) {
-        //       let includeItem = { model: RelatedModel };
-
-        //       // Si en el WHERE hay filtros para el modelo incluido
-        //       if (where[modelName]) {
-        //         includeItem.where = where[modelName];   // ejemplo: { sid_instituto: "7rclr" }
-        //         includeItem.required = true; // INNER JOIN
-        //         delete where[modelName];     // lo quitamos del where principal
-        //       }
-
-        //       include.push(includeItem);
-        //     }
-        //   }
-        // }
-
-        // 3) Includes dinámicos con soporte para includes anidados
-        // let include = [];
-
-        // if (rawInclude) {
-        //   const models = rawInclude.split(",").map(m => m.trim());
-
-        //   for (const modelName of models) {
-        //     const RelatedModel = Model.sequelize.models[modelName];
-
-        //     if (!RelatedModel) continue;
-
-        //     // Si el modelo está asociado directamente → include directo
-        //     if (Model.associations[modelName]) {
-        //       let includeItem = { model: RelatedModel };
-
-        //       if (where[modelName]) {
-        //         includeItem.where = where[modelName];
-        //         includeItem.required = true;
-        //         delete where[modelName];
-        //       }
-
-        //       include.push(includeItem);
-        //       continue;
-        //     }
-
-        //     // Si NO está asociado directamente → buscar una relación intermedia
-        //     for (const assocName in Model.associations) {
-        //       const AssocModel = Model.associations[assocName].target;
-
-        //       // ¿El modelo intermedio tiene al modelo solicitado?
-        //       if (AssocModel.associations && AssocModel.associations[modelName]) {
-        //         let nestedInclude = {
-        //           model: AssocModel,
-        //           required: true,
-        //           include: [
-        //             {
-        //               model: RelatedModel,
-        //               required: true,
-        //             }
-        //           ]
-        //         };
-
-        //         // si en where hay filtros para el modelo solicitado (nivel)
-        //         if (where[modelName]) {
-        //           nestedInclude.include[0].where = where[modelName];
-        //           delete where[modelName];
-        //         }
-
-        //         include.push(nestedInclude);
-        //       }
-        //     }
-        //   }
-        // }
-
         let include = [];
 
         if (rawInclude) {
@@ -325,20 +248,6 @@ export default function createCRUD(Model, pkField = "id") {
         return res.status(500).json({ error: "Server error" });
       }
     },
-
-
-
-    /*
-    getAll: async (req, res) => {
-      try {
-        const items = await Model.findAll();
-        return res.json(items);
-      } catch (err) {
-        console.error("[getAll]", err);
-        return res.status(500).json({ error: "Server error" });
-      }
-    },
-    */
 
     // Obtener por PK
     getById: async (req, res) => {
