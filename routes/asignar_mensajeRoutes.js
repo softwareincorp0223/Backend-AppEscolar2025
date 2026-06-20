@@ -1,7 +1,6 @@
 import express from "express";
-import { getAll, getById, createOne, updateOne, deleteOne } from "../controllers/asignar_mensajeController.js";
+import {getById, createOne, updateOne, deleteOne } from "../controllers/asignar_mensajeController.js";
 const router = express.Router();
-router.get("/", getAll);
 router.get("/:id", getById);
 router.post("/", createOne);
 router.put("/:id", updateOne);
