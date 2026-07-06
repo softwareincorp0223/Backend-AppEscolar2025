@@ -48,6 +48,7 @@ export const createOne = async (req, res) => {
   req.body = value;
   return crud.createOne(req, res);
 };
+
 export const updateOne = async (req, res) => {
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });

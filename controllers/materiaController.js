@@ -1,6 +1,7 @@
 import Materia from "../models/materia.js";
 import createCRUD from "./core/genericController.js";
 import schema from "../validators/materiaSchema.js";
+import sequelize from "../config/database.js";
 
 const crud = createCRUD(Materia, "id_materia");
 

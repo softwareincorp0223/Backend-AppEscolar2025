@@ -7,6 +7,8 @@ const crud = createCRUD(Tareas, "id_tareas");
 export const getAll = crud.getAll;
 export const getById = crud.getById;
 export const createOne = async (req, res) => {
+  console.log(req.body);
+  
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });
   req.body = value;

@@ -1,20 +1,20 @@
 import multer from "multer";
 
 // =========================
-// Storage temporal memoria
+// Storage temporal en memoria
 // =========================
 
 const storage = multer.memoryStorage();
 
 // =========================
-// Configuración general
+// Configuración
 // =========================
 
 const upload = multer({
   storage,
 
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 10 * 1024 * 1024, // 10 MB
   },
 
   fileFilter: (req, file, cb) => {
@@ -22,10 +22,10 @@ const upload = multer({
     console.log("===============");
     console.log("MULTER FILE");
     console.log("===============");
-
     console.log(file);
 
     cb(null, true);
+
   },
 });
 

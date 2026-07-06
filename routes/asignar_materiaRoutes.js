@@ -1,8 +1,9 @@
 import express from "express";
 import generarIdMiddleware from "../middleware/generarIdMiddleware.js";
-import { getAll, getById, createOne, updateOne, deleteOne } from "../controllers/asignar_materiaController.js";
+import { getAll, getById, createOne, updateOne, deleteOne, consultaSelectMateria } from "../controllers/asignar_materiaController.js";
 const router = express.Router();
 router.get("/", getAll);
+router.get("/consulta-select", consultaSelectMateria);
 router.get("/:id", getById);
 router.post("/", generarIdMiddleware, createOne);
 router.put("/:id", updateOne);
