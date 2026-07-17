@@ -9,6 +9,8 @@ const crud = createCRUD(AsignarMensaje, "id_asignar_mensaje");
 export const getById = crud.getById;
 
 export const createOne = async (req, res) => {
+  console.log(req.body);
+  
   const { error, value } = schema.validate(req.body, {
     abortEarly: false,
   });

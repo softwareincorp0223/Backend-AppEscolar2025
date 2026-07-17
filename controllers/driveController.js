@@ -1,73 +1,44 @@
-import { google } from "googleapis";
-import { Readable } from "stream";
+import ImageKit from "imagekit";
+import dotenv from "dotenv";
+dotenv.config();
 
 // =========================
-// Auth
+// Configuración
 // =========================
 
-const auth = new google.auth.GoogleAuth({
-  keyFile: "google-drive-key.json",
-  scopes: [
-    "https://www.googleapis.com/auth/drive",
-  ],
-});
-
-const drive = google.drive({
-  version: "v3",
-  auth,
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
 
 // =========================
 // Subir un archivo
 // =========================
 
-const uploadFileToDrive = async (file) => {
+const uploadFileToImageKit = async (file) => {
 
-  const bufferStream = new Readable();
+  const response = await imagekit.upload({
 
-  bufferStream.push(file.buffer);
-  bufferStream.push(null);
+    file: file.buffer,
 
-  const response = await drive.files.create({
+    fileName: file.originalname,
 
-    requestBody: {
-
-      name: file.originalname,
-
-      parents: [
-        "1oWv-gNi37p6ej7mgDGwHCYNuXwfIbVP9"
-      ],
-
-    },
-
-    media: {
-
-      mimeType: file.mimetype,
-
-      body: bufferStream,
-
-    },
-
-  });
-
-  await drive.permissions.create({
-
-    fileId: response.data.id,
-
-    requestBody: {
-      role: "reader",
-      type: "anyone",
-    },
+    useUniqueFileName: true,
 
   });
 
   return {
 
-    id: response.data.id,
+    id: response.fileId,
 
-    url: `https://drive.google.com/uc?id=${response.data.id}`,
+    nombre: response.name,
 
-    nombre: file.originalname,
+    url: response.url,
+
+    tamaño: response.size,
+
+    tipo: response.fileType,
 
   };
 
@@ -81,28 +52,29 @@ export const upload = async (req, res) => {
 
   try {
 
-    if (!req.files || req.files.length === 0) {
+    if (!req.files?.length) {
 
       return res.status(400).json({
+
         ok: false,
-        message: "No se recibieron archivos."
+
+        message: "No se recibieron archivos.",
+
       });
 
     }
 
-    const archivos = [];
+    const archivos = await Promise.all(
 
-    for (const file of req.files) {
+      req.files.map(uploadFileToImageKit)
 
-      const resultado = await uploadFileToDrive(file);
+    );
 
-      archivos.push(resultado);
-
-    }
-
-    return res.json({
+    return res.status(200).json({
 
       ok: true,
+
+      total: archivos.length,
 
       files: archivos,
 
@@ -116,7 +88,7 @@ export const upload = async (req, res) => {
 
       ok: false,
 
-      message: "Error al subir archivos."
+      message: error.message,
 
     });
 
