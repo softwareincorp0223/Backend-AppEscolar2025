@@ -2,6 +2,7 @@ import AsignarMateria from "../models/asignar_materia.js";
 import createCRUD from "./core/genericController.js";
 import schema from "../validators/asignar_materiaSchema.js";
 import Materia from "../models/materia.js";
+import { Op } from "sequelize";
 
 const crud = createCRUD(AsignarMateria, "id_asignar_materia");
 
@@ -47,16 +48,49 @@ export const consultaSelectMateria = async (req, res) => {
 };
 
 export const getById = crud.getById;
+
+const existeAsignacionDuplicada = async (data, id_asignar_materia) => {
+  const where = {
+    sid_materia: data.sid_materia,
+    sid_profesor: data.sid_profesor,
+    sid_nivel: data.sid_nivel,
+    sid_grado: data.sid_grado,
+    sid_grupo: data.sid_grupo,
+  };
+
+  if (id_asignar_materia) {
+    where.id_asignar_materia = { [Op.ne]: id_asignar_materia };
+  }
+
+  return AsignarMateria.findOne({ where });
+};
+
 export const createOne = async (req, res) => {
   console.log("Validating request body:", req.body);
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });
+
+  const duplicado = await existeAsignacionDuplicada(value);
+  if (duplicado) {
+    return res.status(409).json({
+      message: "Ya existe una asignación con la misma materia, profesor, nivel, grado y grupo",
+    });
+  }
+
   req.body = value;
   return crud.createOne(req, res);
 };
 export const updateOne = async (req, res) => {
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });
+
+  const duplicado = await existeAsignacionDuplicada(value, req.params.id);
+  if (duplicado) {
+    return res.status(409).json({
+      message: "Ya existe una asignación con la misma materia, profesor, nivel, grado y grupo",
+    });
+  }
+
   req.body = value;
   return crud.updateOne(req, res);
 };
