@@ -19,6 +19,7 @@ router.put(
     upload.array("archivos"),
     updateOne,
 );
+router.delete("/", deleteOne);
 router.delete("/:id", deleteOne);
 
 export const basePath = "/api/mensaje";

@@ -11,12 +11,6 @@ export const getById = crud.getById;
 export const createOne = async (req, res) => {
   try {
 
-    //console.log("BODY:");
-    //console.log(req.body);
-
-    //console.log("FILES:");
-    //console.log(req.files);
-
     // VALIDAR
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
@@ -30,12 +24,6 @@ export const createOne = async (req, res) => {
 
     // BODY LIMPIO
     req.body = value;
-
-    // SI QUIERES GUARDAR ARCHIVOS
-    // ejemplo:
-    // if (req.files?.archivo?.[0]) {
-    //   req.body.archivo = req.files.archivo[0].filename;
-    // }
 
     return crud.createOne(req, res);
 
@@ -51,27 +39,25 @@ export const createOne = async (req, res) => {
 };
 
 export const updateOne = async (req, res) => {
-  try {
 
-    console.log("BODY:");
-    console.log(req.body);
+    const updateSchema = schema.fork(
+        Object.keys(schema.describe().keys),
+        field => field.optional()
+    );
 
-    console.log("FILES:");
-    console.log(req.files);
-
-    return res.json({
-      ok: true,
-      body: req.body,
-      files: req.files,
+    const { error, value } = updateSchema.validate(req.body, {
+        abortEarly: false
     });
 
-  } catch (error) {
-    console.error(error);
+    if (error) {
+        return res.status(400).json({
+            errors: error.details.map(d => d.message)
+        });
+    }
 
-    return res.status(500).json({
-      error: error.message,
-    });
-  }
+    req.body = value;
+
+    return crud.updateOne(req, res);
 };
 
 export const deleteOne = crud.deleteOne;

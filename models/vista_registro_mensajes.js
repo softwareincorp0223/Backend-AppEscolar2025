@@ -14,7 +14,7 @@ const VistaRegistroMensajes = sequelize.define(
     },
 
     eliminado: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.STRING(20),
     },
 
     asunto: {

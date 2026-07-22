@@ -5,6 +5,10 @@ import Tareas from "../models/tareas.js";
 import Alumno from "../models/alumno.js";
 import AsignarMateria from "../models/asignar_materia.js";
 import Usuario from "../models/usuario.js";
+import Padre from "../models/padre.js";
+import Nivel from "../models/nivel.js";
+import Grado from "../models/grado.js";
+import Grupo from "../models/grupo.js";
 
 const DAY_NAMES = ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"];
 
@@ -120,10 +124,18 @@ export const getAll = async (req, res) => {
       totalMensajesMes,
       totalMensajesMesAnterior,
       totalProfesores,
+      totalPadres,
+      totalUsuarios,
       totalAlumnos,
+      totalNiveles,
+      totalGrados,
+      totalGrupos,
       totalTareasMes,
+      totalTareasSemana,
+      totalEventosHoy,
       mensajesPorDiaRows,
       actividadSemanalRows,
+      alumnosPorNivelRows,
       eventosProximos,
       mensajesRecientes,
       tareasRecientes,
@@ -162,7 +174,37 @@ export const getAll = async (req, res) => {
             }
           : {}),
       }),
+      Padre.count({ where: whereBase }),
+      Usuario.count({ where: whereBase }),
       Alumno.count({ where: whereBase }),
+      Nivel.count({ where: whereBase }),
+      Grado.count({
+        include: [
+          {
+            model: Nivel,
+            attributes: [],
+            where: whereBase,
+            required: true,
+          },
+        ],
+      }),
+      Grupo.count({
+        include: [
+          {
+            model: Grado,
+            attributes: [],
+            required: true,
+            include: [
+              {
+                model: Nivel,
+                attributes: [],
+                where: whereBase,
+                required: true,
+              },
+            ],
+          },
+        ],
+      }),
       Tareas.count({
         where: {
           ...whereBase,
@@ -170,6 +212,21 @@ export const getAll = async (req, res) => {
             [Op.gte]: inicioMes,
             [Op.lt]: finMes,
           },
+        },
+      }),
+      Tareas.count({
+        where: {
+          ...whereBase,
+          fecha_creacion: {
+            [Op.gte]: inicioSemana,
+            [Op.lt]: tomorrow,
+          },
+        },
+      }),
+      Evento.count({
+        where: {
+          ...whereBase,
+          fecha: toDateOnly(today),
         },
       }),
       Mensaje.findAll({
@@ -202,6 +259,23 @@ export const getAll = async (req, res) => {
         },
         group: [literal("DATE(fecha_envio)")],
         order: [[literal("DATE(fecha_envio)"), "ASC"]],
+        raw: true,
+      }),
+      Alumno.findAll({
+        attributes: [
+          [col("Nivel.nombre"), "nivel"],
+          [fn("COUNT", col("Alumno.id_alumno")), "total"],
+        ],
+        where: whereBase,
+        include: [
+          {
+            model: Nivel,
+            attributes: [],
+            required: false,
+          },
+        ],
+        group: [col("Nivel.nombre")],
+        order: [[literal("COUNT(Alumno.id_alumno)"), "DESC"]],
         raw: true,
       }),
       Evento.findAll({
@@ -250,6 +324,10 @@ export const getAll = async (req, res) => {
     }));
 
     const actividadSemanal = buildWeeklySeries(actividadSemanalRows, today);
+    const alumnosPorNivel = alumnosPorNivelRows.map((row) => ({
+      nivel: row.nivel || "Sin nivel",
+      total: Number(row.total) || 0,
+    }));
 
     const variacionMensajesMes =
       totalMensajesMesAnterior > 0
@@ -301,12 +379,20 @@ export const getAll = async (req, res) => {
     return res.json({
       totalMensajesMes,
       totalProfesores,
+      totalPadres,
+      totalUsuarios,
       totalAlumnos,
+      totalNiveles,
+      totalGrados,
+      totalGrupos,
       totalTareasMes,
+      totalTareasSemana,
       totalEventosProximos: eventosProximos.length,
+      totalEventosHoy,
       variacionMensajesMes,
       mensajesPorDia,
       actividadSemanal,
+      alumnosPorNivel,
       eventosProximos: eventosProximos.map((evento) => ({
         id_evento: evento.id_evento,
         nombre: evento.nombre || "Evento sin nombre",

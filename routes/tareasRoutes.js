@@ -7,6 +7,7 @@ router.get("/", getAll);
 router.get("/:id", getById);
 router.post("/", generarIdMiddleware, createOne);
 router.put("/:id", updateOne);
+router.delete("/", deleteOne);
 router.delete("/:id", deleteOne);
 export const basePath = "/api/tareas";
 export default router;

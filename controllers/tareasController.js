@@ -1,6 +1,7 @@
 import Tareas from "../models/tareas.js";
 import createCRUD from "./core/genericController.js";
 import schema from "../validators/tareasSchema.js";
+import { generadorID } from "../helpers/generadorID.js";
 
 const crud = createCRUD(Tareas, "id_tareas");
 
@@ -8,6 +9,10 @@ export const getAll = crud.getAll;
 export const getById = crud.getById;
 export const createOne = async (req, res) => {
   console.log(req.body);
+
+  if (!req.body.id_tareas || String(req.body.id_tareas).trim() === "") {
+    req.body.id_tareas = generadorID(10);
+  }
   
   const { error, value } = schema.validate(req.body, { abortEarly: false });
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });
