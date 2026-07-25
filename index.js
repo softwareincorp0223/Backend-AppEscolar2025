@@ -5,6 +5,7 @@ import sequelize from "./config/database.js";
 import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
+import { requireRoutePermission } from "./middleware/permissionMiddleware.js";
 
 dotenv.config();
 const app = express();
@@ -37,7 +38,11 @@ for (const file of fs.readdirSync(routesPath)) {
     const routeModule = await import(pathToFileURL(path.join(routesPath, file)));
     const router = routeModule.default;
     const basePath = routeModule.basePath || "/api/" + file.replace("Routes.js", "").replace(".js", "").toLowerCase();
-    app.use(basePath, router);
+    if (basePath === "/api/auth") {
+      app.use(basePath, router);
+    } else {
+      app.use(basePath, ...requireRoutePermission(basePath), router);
+    }
   }
 }
 
@@ -51,4 +56,3 @@ try {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`));
-

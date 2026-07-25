@@ -9,6 +9,8 @@ import Padre from "../models/padre.js";
 import Nivel from "../models/nivel.js";
 import Grado from "../models/grado.js";
 import Grupo from "../models/grupo.js";
+import AlumnoCiclo from "../models/alumno_ciclo.js";
+import Ciclo from "../models/ciclo.js";
 
 const DAY_NAMES = ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"];
 
@@ -176,7 +178,17 @@ export const getAll = async (req, res) => {
       }),
       Padre.count({ where: whereBase }),
       Usuario.count({ where: whereBase }),
-      Alumno.count({ where: whereBase }),
+      AlumnoCiclo.count({
+        where: { estado: "activo" },
+        include: [
+          {
+            model: Ciclo,
+            attributes: [],
+            where: { ...whereBase, ciclo_cerrado: 0 },
+            required: true,
+          },
+        ],
+      }),
       Nivel.count({ where: whereBase }),
       Grado.count({
         include: [
@@ -261,13 +273,19 @@ export const getAll = async (req, res) => {
         order: [[literal("DATE(fecha_envio)"), "ASC"]],
         raw: true,
       }),
-      Alumno.findAll({
+      AlumnoCiclo.findAll({
         attributes: [
           [col("Nivel.nombre"), "nivel"],
-          [fn("COUNT", col("Alumno.id_alumno")), "total"],
+          [fn("COUNT", col("AlumnoCiclo.sid_alumno")), "total"],
         ],
-        where: whereBase,
+        where: { estado: "activo" },
         include: [
+          {
+            model: Ciclo,
+            attributes: [],
+            where: { ...whereBase, ciclo_cerrado: 0 },
+            required: true,
+          },
           {
             model: Nivel,
             attributes: [],
@@ -275,7 +293,7 @@ export const getAll = async (req, res) => {
           },
         ],
         group: [col("Nivel.nombre")],
-        order: [[literal("COUNT(Alumno.id_alumno)"), "DESC"]],
+        order: [[literal("COUNT(AlumnoCiclo.sid_alumno)"), "DESC"]],
         raw: true,
       }),
       Evento.findAll({

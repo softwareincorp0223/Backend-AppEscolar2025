@@ -1,15 +1,15 @@
 import express from "express";
-import { getAll, getById, createOne, updateOne, deleteOne, alumnosPadres, getActivos } from "../controllers/alumnoController.js";
 import generarIdMiddleware from "../middleware/generarIdMiddleware.js";
+import { getAll, getById, createOne, updateOne, deleteOne } from "../controllers/alumno_cicloController.js";
 
 const router = express.Router();
+
 router.get("/", getAll);
-router.get("/activos", getActivos);
-router.get("/alumnos/:sid_instituto", alumnosPadres);
 router.get("/:id", getById);
 router.post("/", generarIdMiddleware, createOne);
 router.put("/:id", updateOne);
 router.delete("/", deleteOne);
 router.delete("/:id", deleteOne);
-export const basePath = "/api/alumno";
+
+export const basePath = "/api/alumno_ciclo";
 export default router;
