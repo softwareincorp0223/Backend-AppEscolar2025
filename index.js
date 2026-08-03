@@ -12,7 +12,7 @@ const app = express();
 
 app.use(express.json());
 
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.BACKEND_URL];
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.FRONTEND_URL_ADMIN, process.env.BACKEND_URL];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -38,7 +38,7 @@ for (const file of fs.readdirSync(routesPath)) {
     const routeModule = await import(pathToFileURL(path.join(routesPath, file)));
     const router = routeModule.default;
     const basePath = routeModule.basePath || "/api/" + file.replace("Routes.js", "").replace(".js", "").toLowerCase();
-    if (basePath === "/api/auth") {
+    if (basePath === "/api/auth" || basePath === "/api/mobile") {
       app.use(basePath, router);
     } else {
       app.use(basePath, ...requireRoutePermission(basePath), router);

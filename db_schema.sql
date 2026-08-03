@@ -408,7 +408,7 @@ CREATE TABLE `grupo` (
 CREATE TABLE `instituto` (
   `id_instituto` char(20) DEFAULT NULL,
   `nombre` varchar(100) DEFAULT NULL,
-  `logo` char(100) DEFAULT NULL,
+  `logo` varchar(250) DEFAULT NULL,
   `correo` char(100) DEFAULT NULL,
   `banco` char(100) DEFAULT NULL,
   `cuenta_banco` char(20) DEFAULT NULL,
@@ -1154,4 +1154,3 @@ CREATE TABLE `administrador` (
   `contrasena` varchar(250) DEFAULT NULL,
   `privilegios` varchar(5) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
-

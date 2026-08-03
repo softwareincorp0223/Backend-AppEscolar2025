@@ -4,7 +4,7 @@ import sequelize from "../config/database.js";
 const Instituto = sequelize.define("Instituto", {
   id_instituto: { type: DataTypes.STRING(20), primaryKey: true, allowNull: true },
   nombre: { type: DataTypes.STRING(100),  allowNull: true },
-  logo: { type: DataTypes.STRING(100),  allowNull: true },
+  logo: { type: DataTypes.STRING(250),  allowNull: true },
   correo: { type: DataTypes.STRING(100),  allowNull: true },
   banco: { type: DataTypes.STRING(100),  allowNull: true },
   cuenta_banco: { type: DataTypes.STRING(20),  allowNull: true },
