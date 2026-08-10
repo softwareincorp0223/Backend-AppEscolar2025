@@ -70,9 +70,27 @@ const getTemporalContext = async () => {
   return { instituto: toPlain(instituto), padre: toPlain(padre) };
 };
 
-const getPadreId = async () => {
-  const { padre } = await getTemporalContext();
-  return padre?.id_padre || null;
+const getRequestValue = (req, key) => {
+  return req.query?.[key] || req.body?.[key] || req.headers?.[key.replace("_", "-")];
+};
+
+const getPadreId = (req) => {
+  const idPadre = getRequestValue(req, "id_padre");
+  return typeof idPadre === "string" && idPadre.trim() ? idPadre.trim() : null;
+};
+
+const getContextByPadre = async (idPadre) => {
+  if (!idPadre) return { instituto: null, padre: null };
+
+  const padre = await Padre.findByPk(idPadre);
+  if (!padre) return { instituto: null, padre: null };
+
+  const padrePlain = toPlain(padre);
+  const instituto = padrePlain.sid_instituto
+    ? await Instituto.findByPk(padrePlain.sid_instituto)
+    : null;
+
+  return { instituto: toPlain(instituto), padre: padrePlain };
 };
 
 const getAlumnoIdsByPadre = async (idPadre) => {
@@ -107,7 +125,7 @@ const getSelectedAlumnoId = async (req) => {
   if (req.query.sid_alumno) return req.query.sid_alumno;
   if (req.body?.sid_alumno) return req.body.sid_alumno;
 
-  const idPadre = await getPadreId();
+  const idPadre = getPadreId(req);
   if (!idPadre) return null;
 
   const alumnoIds = await getAlumnoIdsByPadre(idPadre);
@@ -164,9 +182,9 @@ export const getContextoTemporal = async (_req, res) => {
   }
 };
 
-export const getAlumnos = async (_req, res) => {
+export const getAlumnos = async (req, res) => {
   try {
-    const idPadre = await getPadreId();
+    const idPadre = getPadreId(req);
     if (!idPadre) return ok(res, []);
 
     const alumnoIds = await getAlumnoIdsByPadre(idPadre);
@@ -213,7 +231,13 @@ export const selectAlumno = async (req, res) => {
     const alumno = await Alumno.findByPk(sidAlumno);
     if (!alumno) return res.status(404).json({ error: "Alumno no encontrado" });
 
-    const idPadre = await getPadreId();
+    const idPadre = getPadreId(req);
+    if (idPadre) {
+      const alumnoIds = await getAlumnoIdsByPadre(idPadre);
+      if (!alumnoIds.includes(sidAlumno)) {
+        return res.status(403).json({ error: "Alumno no pertenece al padre" });
+      }
+    }
 
     return ok(res, {
       status: "success",
@@ -493,7 +517,7 @@ export const getEventos = async (req, res) => {
 
     const pageRows = await Evento.findAll({
       where,
-      order: [["fecha", "ASC"], ["hora", "ASC"]],
+      order: [["fecha", "DESC"], ["hora", "DESC"]],
       limit: limit + 1,
       offset,
     });
@@ -564,9 +588,10 @@ export const getAsistencias = async (req, res) => {
   }
 };
 
-export const getPerfil = async (_req, res) => {
+export const getPerfil = async (req, res) => {
   try {
-    const { instituto, padre } = await getTemporalContext();
+    const idPadre = getPadreId(req);
+    const { instituto, padre } = await getContextByPadre(idPadre);
 
     return ok(res, {
       perfil: {

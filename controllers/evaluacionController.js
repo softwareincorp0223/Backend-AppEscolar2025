@@ -34,7 +34,6 @@ export const getEvaluacion = async (req, res) => {
             "fecha_registro"
           ],
           required: false,
-          // where: ciclo ? { ciclo } : undefined // filtro por ciclo
         },
         {
           model: Nivel,
@@ -177,7 +176,7 @@ export const getAllExcel = async (req, res) => {
 export const getCalificacionPdf = async (req, res) => {
   try {
     const { id_alumno } = req.params;
-    // const { ciclo } = req.query; // opcional para filtrar
+    const { ciclo } = req.query;
 
     const data = await Alumno.findAll({
       where: { id_alumno },
@@ -202,7 +201,8 @@ export const getCalificacionPdf = async (req, res) => {
             "ciclo",
             "fecha_registro"
           ],
-          required: false,
+          required: Boolean(ciclo),
+          where: ciclo ? { ciclo } : undefined,
           include: [
             {
               model: Calificaciones,
@@ -216,7 +216,6 @@ export const getCalificacionPdf = async (req, res) => {
               ],
             },
           ],
-          // where: ciclo ? { ciclo } : undefined // filtro por ciclo
         },
         {
           model: Nivel,
@@ -234,7 +233,11 @@ export const getCalificacionPdf = async (req, res) => {
 
       // 👇 IMPORTANTE: quitar raw para que agrupe bien
       raw: false,
-      nest: true
+      nest: true,
+      order: [
+        [Evaluacion, Calificaciones, { model: Materia, as: "Materia" }, "nombre", "ASC"],
+        [Evaluacion, Calificaciones, "periodo", "ASC"],
+      ]
     });
 
     return res.json(data);
