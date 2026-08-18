@@ -12,7 +12,7 @@ const schema = Joi.object({
   sid_grupo: Joi.string(),
   sid_padre: Joi.string(),
   sid_instituto: Joi.string(),
-  foto: Joi.string(),
+  foto: Joi.string().allow("", null),
   nombre_contacto: Joi.string(),
   telefono_contacto: Joi.string(),
   alergias: Joi.string()

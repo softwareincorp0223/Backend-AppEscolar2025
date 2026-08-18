@@ -6,6 +6,7 @@ import PrivilegiosRol from "../models/privilegios_rol.js";
 import Rol from "../models/rol.js";
 import Usuario from "../models/usuario.js";
 import sequelize from "../config/database.js";
+import { Op } from "sequelize";
 import createCRUD from "./core/genericController.js";
 import schema from "../validators/escuelas_registradasSchema.js";
 import { generadorID } from "../helpers/generadorID.js";
@@ -83,7 +84,61 @@ const buildAcceptedEmail = ({ escuela, correo, password }) => {
   };
 };
 
-export const getAll = crud.getAll;
+export const getAll = async (req, res) => {
+  try {
+    const escuelas = await EscuelasRegistradas.findAll();
+    const correos = [
+      ...new Set(
+        escuelas
+          .map((escuela) => String(escuela.correo_contacto || "").trim())
+          .filter(Boolean)
+      ),
+    ];
+
+    const [usuarios, institutos] = correos.length
+      ? await Promise.all([
+          Usuario.findAll({
+            where: { correo: { [Op.in]: correos } },
+            attributes: ["correo", "sid_instituto"],
+          }),
+          Instituto.findAll({
+            where: { correo: { [Op.in]: correos } },
+            attributes: ["id_instituto", "correo", "sid_usuario"],
+          }),
+        ])
+      : [[], []];
+
+    const usuariosPorCorreo = new Map(
+      usuarios.map((usuario) => [
+        String(usuario.correo || "").trim().toLowerCase(),
+        usuario,
+      ])
+    );
+    const institutosPorCorreo = new Map(
+      institutos.map((instituto) => [
+        String(instituto.correo || "").trim().toLowerCase(),
+        instituto,
+      ])
+    );
+
+    const data = escuelas.map((escuela) => {
+      const correo = String(escuela.correo_contacto || "").trim().toLowerCase();
+      const usuario = usuariosPorCorreo.get(correo);
+      const instituto = institutosPorCorreo.get(correo);
+
+      return {
+        ...escuela.toJSON(),
+        aceptada: Boolean(usuario),
+        id_instituto_aceptado: usuario?.sid_instituto || instituto?.id_instituto || null,
+      };
+    });
+
+    return res.json(data);
+  } catch (err) {
+    console.error("[escuelas_registradas.getAll]", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
 export const getById = crud.getById;
 export const createOne = async (req, res) => {
   const { error, value } = schema.validate(req.body, { abortEarly: false });

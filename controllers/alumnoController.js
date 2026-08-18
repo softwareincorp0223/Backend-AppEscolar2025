@@ -30,7 +30,24 @@ const getCicloActivo = async (sid_instituto, options = {}) => {
     ...options,
   });
 
-  return registroActivo?.Ciclo || null;
+  if (registroActivo?.Ciclo) return registroActivo.Ciclo;
+
+  const ciclosAbiertos = await Ciclo.findAll({
+    where: { sid_instituto, ciclo_cerrado: 0 },
+    order: [["orden", "ASC"]],
+    ...options,
+  });
+
+  for (const ciclo of ciclosAbiertos) {
+    const registros = await AlumnoCiclo.count({
+      where: { sid_ciclo: ciclo.id_ciclo },
+      ...options,
+    });
+
+    if (registros === 0) return ciclo;
+  }
+
+  return null;
 };
 
 export const getActivos = async (req, res) => {
@@ -107,25 +124,38 @@ export const createOne = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const created = await Alumno.create(value, { transaction });
     const cicloActivo = await getCicloActivo(value.sid_instituto, { transaction });
 
-    if (cicloActivo && value.sid_nivel && value.sid_grado && value.sid_grupo) {
-      await AlumnoCiclo.create(
-        {
-          id_alumno_ciclo: generadorID(10),
-          sid_alumno: created.id_alumno,
-          sid_ciclo: cicloActivo.id_ciclo,
-          sid_nivel: value.sid_nivel,
-          sid_grado: value.sid_grado,
-          sid_grupo: value.sid_grupo,
-          estado: "activo",
-          fecha_inicio: today(),
-          promovido: false,
-        },
-        { transaction }
-      );
+    if (!cicloActivo) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: "No existe un ciclo abierto para asignar al alumno",
+      });
     }
+
+    if (!value.sid_nivel || !value.sid_grado || !value.sid_grupo) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: "Nivel, grado y grupo son requeridos para asignar al alumno al ciclo activo",
+      });
+    }
+
+    const created = await Alumno.create(value, { transaction });
+
+    await AlumnoCiclo.create(
+      {
+        id_alumno_ciclo: generadorID(10),
+        sid_alumno: created.id_alumno,
+        sid_ciclo: cicloActivo.id_ciclo,
+        sid_nivel: value.sid_nivel,
+        sid_grado: value.sid_grado,
+        sid_grupo: value.sid_grupo,
+        estado: "activo",
+        fecha_inicio: today(),
+        promovido: false,
+      },
+      { transaction }
+    );
 
     await transaction.commit();
     return res.status(201).json(created);

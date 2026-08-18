@@ -26,11 +26,11 @@ const VistaMensajes = sequelize.define(
     },
 
     mensaje_programado: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.STRING(5),
     },
 
     eliminado: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.STRING(20),
     },
 
     sid_instituto: { 

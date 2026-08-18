@@ -1,3 +1,4 @@
+import ImageKit from "imagekit";
 import { Op } from "sequelize";
 
 import Alumno from "../models/alumno.js";
@@ -11,6 +12,7 @@ import UrlMensaje from "../models/url_mensaje.js";
 import AsignarTarea from "../models/asignar_tarea.js";
 import Tareas from "../models/tareas.js";
 import ArchivoTarea from "../models/archivo_tarea.js";
+import ArchivoRespuestaTarea from "../models/archivo_respuesta_tarea.js";
 import UrlTarea from "../models/url_tarea.js";
 import Seguimiento from "../models/seguimiento.js";
 import AsignarAtributo from "../models/asignar_atributo.js";
@@ -22,15 +24,26 @@ import Asistencia from "../models/asistencia.js";
 import Evento from "../models/evento.js";
 import AsignarEvento from "../models/asignar_evento.js";
 import Instituto from "../models/instituto.js";
+import DispositivosPadre from "../models/dispositivos_padre.js";
+import { generadorID } from "../helpers/generadorID.js";
 
 const READ_VALUES = ["si", "SI", "Si", "1", 1, true, "true", "visto", "Visto"];
 const UNREAD_VALUES = ["no", "NO", "No", "0", 0, false, "false", null, ""];
+const ACTIVE_VALUES = ["si", "SI", "Si", "sí", "Sí", "1", 1, true, "true"];
 
 const isReadValue = (value) => READ_VALUES.includes(value);
+const isActiveValue = (value) => ACTIVE_VALUES.includes(value);
+const normalizeSiNo = (value) => (isActiveValue(value) ? "si" : "no");
 
 const toPlain = (row) => (row?.toJSON ? row.toJSON() : row);
 
 const ok = (res, data) => res.json(data);
+
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+});
 
 const getPagination = (req, fallbackLimit) => {
   const limit = Math.max(1, Number(req.query.limit) || fallbackLimit);
@@ -141,6 +154,7 @@ const getNotificationsByAlumno = async (sidAlumno) => {
       Calificaciones: false,
       Calendario: false,
       Asistencias: false,
+      Perfil: false,
       Configuracion: false,
     };
   }
@@ -168,6 +182,7 @@ const getNotificationsByAlumno = async (sidAlumno) => {
     Calificaciones: calificaciones > 0,
     Calendario: calendario > 0,
     Asistencias: asistencias > 0,
+    Perfil: false,
     Configuracion: false,
   };
 };
@@ -296,14 +311,27 @@ export const getMensajes = async (req, res) => {
         ...mensaje,
         tipo_mensaje: tipoById.get(mensaje.sid_tipo) || "",
         leido: asignacion.leido ?? mensaje.leido,
-        respuesta_rapida: asignacion.respuesta_rapida ?? mensaje.respuesta_rapida,
+        respuesta_rapida: asignacion.respuesta_rapida || "",
+        permite_respuesta_rapida: normalizeSiNo(mensaje.respuesta_rapida),
+        mensaje_programado: normalizeSiNo(mensaje.mensaje_programado),
+        repetir: normalizeSiNo(mensaje.repetir),
+        fecha_envio: isActiveValue(mensaje.mensaje_programado)
+          ? mensaje.fecha_envio
+          : "",
+        hora_envio: isActiveValue(mensaje.mensaje_programado)
+          ? mensaje.hora_envio
+          : "",
+        periodo: isActiveValue(mensaje.repetir) ? mensaje.periodo : "",
+        fecha_fin: isActiveValue(mensaje.repetir) ? mensaje.fecha_fin : "",
       };
     });
 
     return ok(res, {
       mensajes,
-      archivosAdjuntos: archivosRows.map(toPlain),
-      links: linksRows.map(toPlain),
+      archivosAdjuntos: archivosRows
+        .map(toPlain)
+        .filter((archivo) => archivo.url),
+      links: linksRows.map(toPlain).filter((link) => link.url),
       pagination,
     });
   } catch (error) {
@@ -316,17 +344,83 @@ export const responderMensaje = async (req, res) => {
   try {
     const sidAlumno = await getSelectedAlumnoId(req);
     const { id } = req.params;
-    const { respuesta } = req.body;
+    const respuestaRaw = String(req.body?.respuesta || "").trim().toLowerCase();
+    const respuesta = respuestaRaw === "sí" ? "si" : respuestaRaw;
 
-    await AsignarMensaje.update(
+    if (!sidAlumno) {
+      return res.status(400).json({ status: "error", msg: "Alumno requerido" });
+    }
+
+    if (!["si", "no"].includes(respuesta)) {
+      return res.status(400).json({ status: "error", msg: "Respuesta invalida" });
+    }
+
+    const [updated] = await AsignarMensaje.update(
       { respuesta_rapida: respuesta },
       { where: { sid_alumno: sidAlumno, sid_mensaje: id } }
     );
 
-    return ok(res, { status: "success" });
+    if (!updated) {
+      return res.status(404).json({ status: "error", msg: "Mensaje no encontrado" });
+    }
+
+    return ok(res, { status: "success", respuesta });
   } catch (error) {
     console.error("[mobile responderMensaje]", error);
     return res.status(500).json({ error: "Error al responder mensaje" });
+  }
+};
+
+export const subirRespuestaTarea = async (req, res) => {
+  try {
+    const sidAlumno = await getSelectedAlumnoId(req);
+    const { id } = req.params;
+
+    if (!sidAlumno) {
+      return res.status(400).json({ status: "error", msg: "Alumno requerido" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ status: "error", msg: "Archivo requerido" });
+    }
+
+    const asignacion = await AsignarTarea.findOne({
+      where: { id_asignar_tarea: id, sid_alumno: sidAlumno },
+    });
+
+    if (!asignacion) {
+      return res.status(404).json({ status: "error", msg: "Tarea no encontrada" });
+    }
+
+    const uploadResponse = await imagekit.upload({
+      file: req.file.buffer,
+      fileName: req.file.originalname,
+      useUniqueFileName: true,
+    });
+
+    const archivo = await ArchivoRespuestaTarea.create({
+      id_archivo_respuesta_tarea: generadorID(10),
+      archivo: uploadResponse.url,
+      sid_asignar_tarea: id,
+    });
+
+    await asignacion.update({
+      estatus: "enviado",
+      leido: asignacion.leido || "si",
+    });
+
+    return ok(res, {
+      status: "success",
+      tarea: {
+        id_asignar_tarea: id,
+        estatus_tarea: "enviado",
+        archivo: uploadResponse.url,
+      },
+      archivo: toPlain(archivo),
+    });
+  } catch (error) {
+    console.error("[mobile subirRespuestaTarea]", error);
+    return res.status(500).json({ error: "Error al subir respuesta de tarea" });
   }
 };
 
@@ -350,16 +444,28 @@ export const getTareas = async (req, res) => {
     const { items: tareasRows, pagination } = pageResult(tareasPageRows, limit, offset);
     const pageTareaIds = tareasRows.map((row) => row.id_tareas).filter(Boolean);
 
-    const [archivosRows, urlsRows] = pageTareaIds.length
+    const pageAsignacionIds = asignaciones
+      .filter((row) => pageTareaIds.includes(row.sid_tarea))
+      .map((row) => row.id_asignar_tarea)
+      .filter(Boolean);
+
+    const [archivosRows, urlsRows, archivosRespuestaRows] = pageTareaIds.length
       ? await Promise.all([
           ArchivoTarea.findAll({ where: { sid_tarea: pageTareaIds } }),
           UrlTarea.findAll({ where: { sid_tarea: pageTareaIds } }),
+          pageAsignacionIds.length
+            ? ArchivoRespuestaTarea.findAll({
+                where: { sid_asignar_tarea: pageAsignacionIds },
+                order: [["id_archivo_respuesta_tarea", "DESC"]],
+              })
+            : [],
         ])
-      : [[], []];
+      : [[], [], []];
 
     const asignacionByTarea = new Map(asignaciones.map((row) => [row.sid_tarea, toPlain(row)]));
     const archivosByTarea = new Map();
     const urlsByTarea = new Map();
+    const archivoRespuestaByAsignacion = new Map();
 
     archivosRows.forEach((row) => {
       const archivo = toPlain(row);
@@ -375,6 +481,13 @@ export const getTareas = async (req, res) => {
         ...(urlsByTarea.get(url.sid_tarea) || []),
         url.url,
       ]);
+    });
+
+    archivosRespuestaRows.forEach((row) => {
+      const archivo = toPlain(row);
+      if (!archivoRespuestaByAsignacion.has(archivo.sid_asignar_tarea)) {
+        archivoRespuestaByAsignacion.set(archivo.sid_asignar_tarea, archivo.archivo);
+      }
     });
 
     const tareas = tareasRows.map((row) => {
@@ -393,6 +506,7 @@ export const getTareas = async (req, res) => {
         estatus_tarea: asignacion.estatus || "pendiente",
         observacion_tarea: asignacion.observacion || "",
         archivos_tarea: archivosByTarea.get(tarea.id_tareas) || [],
+        archivo_respuesta: archivoRespuestaByAsignacion.get(asignacion.id_asignar_tarea) || "",
         url_tarea: urlsByTarea.get(tarea.id_tareas) || [],
       };
     });
@@ -622,6 +736,65 @@ export const getNotificaciones = async (req, res) => {
   } catch (error) {
     console.error("[mobile getNotificaciones]", error);
     return res.status(500).json({ error: "Error al obtener notificaciones" });
+  }
+};
+
+export const registrarDispositivo = async (req, res) => {
+  try {
+    const idPadre = getPadreId(req);
+    const tokenDispositivo =
+      typeof req.body?.token_dispositivo === "string"
+        ? req.body.token_dispositivo.trim()
+        : "";
+    const badgeNotificaciones = Number(req.body?.badge_notificaciones ?? 0);
+
+    if (!idPadre) {
+      return res.status(400).json({ status: "error", msg: "id_padre requerido" });
+    }
+
+    if (!tokenDispositivo) {
+      return res.status(400).json({ status: "error", msg: "token_dispositivo requerido" });
+    }
+
+    const padre = await Padre.findByPk(idPadre);
+    if (!padre) {
+      return res.status(404).json({ status: "error", msg: "Padre no encontrado" });
+    }
+
+    const existingDevice = await DispositivosPadre.findOne({
+      where: { token_dispositivo: tokenDispositivo },
+    });
+
+    if (existingDevice) {
+      await existingDevice.update({
+        id_padre: idPadre,
+        badge_notificaciones: Number.isFinite(badgeNotificaciones)
+          ? badgeNotificaciones
+          : 0,
+      });
+
+      return ok(res, {
+        status: "ok",
+        dispositivo: toPlain(existingDevice),
+      });
+    }
+
+    const dispositivo = await DispositivosPadre.create({
+      id_dispositivos_padre: generadorID(10),
+      id_padre: idPadre,
+      token_dispositivo: tokenDispositivo,
+      badge_notificaciones: Number.isFinite(badgeNotificaciones)
+        ? badgeNotificaciones
+        : 0,
+    });
+
+    return ok(res, {
+      status: "ok",
+      dispositivo: toPlain(dispositivo),
+    });
+  } catch (error) {
+    console.error("[mobile registrarDispositivo]", error);
+    return res.status(500).json({ status: "error", msg: "Error al registrar dispositivo" });
   }
 };
 

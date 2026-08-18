@@ -5,18 +5,37 @@ import upload from "../middleware/upload.js";
 import generarIdMiddleware from "../middleware/generarIdMiddleware.js";
 
 const router = express.Router();
+
+const uploadArchivos = (req, res, next) => {
+    upload.array("archivos")(req, res, (error) => {
+        if (!error) return next();
+
+        if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+            return res.status(413).json({
+                ok: false,
+                message: "Cada archivo adjunto debe pesar 5 MB o menos.",
+            });
+        }
+
+        return res.status(400).json({
+            ok: false,
+            message: error.message || "Error al procesar archivos adjuntos.",
+        });
+    });
+};
+
 router.get("/", getAll);
 router.get("/:id", getById);
 router.post(
     "/",
-    upload.array("archivos"),
+    uploadArchivos,
     generarIdMiddleware,
     createOne,
 );
 
 router.put(
     "/:id",
-    upload.array("archivos"),
+    uploadArchivos,
     updateOne,
 );
 router.delete("/", deleteOne);

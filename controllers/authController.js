@@ -17,6 +17,9 @@ const isActive = (value) =>
   String(value) === "1" ||
   String(value).toLowerCase() === "activo";
 
+const LOGIN_CREDENTIALS_ERROR = "Correo o contrasena incorrectos";
+const LOGIN_GENERIC_ERROR = "No se pudo iniciar sesion";
+
 const generarToken = (datos) => {
   return jwt.sign(datos, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -136,7 +139,7 @@ export const login = async (req, res) => {
   const { correo, contrasena, tipo } = req.body;
 
   if (!correo || !contrasena || !tipo)
-    return res.status(400).json({ error: "Correo, contraseña y tipo son requeridos" });
+    return res.status(400).json({ error: LOGIN_CREDENTIALS_ERROR });
 
   try {
     let user = null;
@@ -146,12 +149,11 @@ export const login = async (req, res) => {
     } else if (tipo === "usuario") {
       user = await Usuario.findOne({ where: { correo } });
     } else {
-      return res.status(400).json({ error: "Tipo de usuario inválido" });
+      return res.status(400).json({ error: LOGIN_CREDENTIALS_ERROR });
     }
-    console.log(user)
-    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+    if (!user) return res.status(401).json({ error: LOGIN_CREDENTIALS_ERROR });
     const isMatch = await comparePassword(contrasena, user.contrasena);
-    if (!isMatch) return res.status(401).json({ msg: "Contraseña incorrecta" });
+    if (!isMatch) return res.status(401).json({ error: LOGIN_CREDENTIALS_ERROR });
 
     const permisos =
       tipo === "usuario"
@@ -170,10 +172,10 @@ export const login = async (req, res) => {
 
     const token = generarToken(payload);
 
-    return res.json({ mensaje: "Autenticación exitosa", token, usuario: payload });
+    return res.json({ mensaje: "Autenticacion exitosa", token, usuario: payload });
   } catch (error) {
     console.error("Error en login:", error);
-    return res.status(500).json({ error: "Error interno del servidor" });
+    return res.status(500).json({ error: LOGIN_GENERIC_ERROR });
   }
 };
 
