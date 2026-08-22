@@ -1,5 +1,5 @@
 import AsignarMensaje from "../models/asignar_mensaje.js";
-import Alumno from "../models/Alumno.js";
+import Alumno from "../models/alumno.js";
 
 import createCRUD from "./core/genericController.js";
 import schema from "../validators/asignar_mensajeSchema.js";

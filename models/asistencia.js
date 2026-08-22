@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 import Alumno from "./alumno.js";
-import Usuario from "./Usuario.js";
+import Usuario from "./usuario.js";
 
 const Asistencia = sequelize.define("Asistencia", {
   id_asistencia: { type: DataTypes.STRING(20), primaryKey: true, allowNull: true },

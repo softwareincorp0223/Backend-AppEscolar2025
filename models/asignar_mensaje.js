@@ -1,6 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import Alumno from "./Alumno.js";
+import Alumno from "./alumno.js";
 
 const AsignarMensaje = sequelize.define(
   "AsignarMensaje",

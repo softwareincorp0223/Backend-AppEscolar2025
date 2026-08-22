@@ -2,7 +2,7 @@ import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 import Nivel from "./nivel.js"
 import Grado from "./grado.js"
-import Grupo from "./Grupo.js"
+import Grupo from "./grupo.js"
 import Instituto from "./instituto.js";
 
 const Alumno = sequelize.define("Alumno", {

@@ -4,7 +4,7 @@ import Instituto from "./instituto.js"
 import Alumno from "./alumno.js";
 import Nivel from "./nivel.js";
 import Grado from "./grado.js";
-import Grupo from "./Grupo.js";
+import Grupo from "./grupo.js";
 import Tipo_mensaje from "./tipo_mensaje.js"
 import Extracurricular from "./extracurricular.js";
 

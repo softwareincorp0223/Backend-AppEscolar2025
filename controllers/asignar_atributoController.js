@@ -4,7 +4,7 @@ import schema from "../validators/asignar_atributoSchema.js";
 import Alumno from "../models/alumno.js";
 import Nivel from "../models/nivel.js";
 import Grado from "../models/grado.js";
-import Grupo from "../models/Grupo.js";
+import Grupo from "../models/grupo.js";
 import Atributo from "../models/atributo.js";
 import Seguimiento from "../models/seguimiento.js";
 import { Op } from "sequelize";

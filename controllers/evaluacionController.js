@@ -4,7 +4,7 @@ import schema from "../validators/evaluacionSchema.js";
 import Alumno from "../models/alumno.js";
 import Nivel from "../models/nivel.js";
 import Grado from "../models/grado.js";
-import Grupo from "../models/Grupo.js";
+import Grupo from "../models/grupo.js";
 import Calificaciones from "../models/calificaciones.js";
 import Materia from "../models/materia.js";
 import Instituto from "../models/instituto.js";
