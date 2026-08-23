@@ -20,6 +20,7 @@ import {
   subirRespuestaTarea,
 } from "../controllers/mobileController.js";
 import { registrarAsistenciaQR } from "../controllers/mobileAttendanceController.js";
+import { descargarBoletaCalificacionesMobile } from "../controllers/mobileGradePdfController.js";
 import upload from "../middleware/upload.js";
 import {
   enviarPushCalificacionesImport,
@@ -39,7 +40,7 @@ const uploadTareaRespuesta = (req, res, next) => {
     if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
       return res.status(413).json({
         status: "error",
-        msg: "El archivo debe pesar 5 MB o menos.",
+        msg: "El archivo debe pesar 10 MB o menos.",
       });
     }
 
@@ -61,6 +62,7 @@ router.get("/tareas", getTareas);
 router.post("/tareas/:id/respuesta", uploadTareaRespuesta, subirRespuestaTarea);
 router.get("/seguimientos", getSeguimientos);
 router.get("/calificaciones", getCalificaciones);
+router.get("/calificaciones/alumno/:idAlumno/boleta", descargarBoletaCalificacionesMobile);
 router.get("/calificaciones/:id/boleta", getBoletaUrl);
 router.get("/calendario", getEventos);
 router.get("/asistencias", getAsistencias);
@@ -79,3 +81,5 @@ router.post("/:modulo/marcar-vistos", marcarVistos);
 
 export const basePath = "/api/mobile";
 export default router;
+
+

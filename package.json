@@ -18,6 +18,7 @@
     "multer": "^2.1.1",
     "mysql2": "^3.2.0",
     "nodemailer": "^9.0.5",
+    "pdfmake": "^0.3.11",
     "sequelize": "^6.37.8"
   },
   "devDependencies": {

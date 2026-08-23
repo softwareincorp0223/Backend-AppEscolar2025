@@ -3,6 +3,11 @@ import Alumno from "../models/alumno.js";
 import { generadorID } from "../helpers/generadorID.js";
 import { sendPushToAlumnos } from "../services/pushNotificationService.js";
 
+const ATTENDANCE_TYPES = {
+  ENTRADA: "entrada",
+  SALIDA: "salida",
+};
+
 const today = () => {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Mexico_City",
@@ -21,9 +26,42 @@ const currentTime = () => {
   });
 };
 
+const normalizeAttendanceType = (tipo) =>
+  String(tipo || "")
+    .trim()
+    .toLowerCase();
+
+const resolveNextAttendanceType = (asistenciasHoy) => {
+  const tiposRegistrados = asistenciasHoy.map((asistencia) =>
+    normalizeAttendanceType(asistencia.tipo)
+  );
+
+  const tieneEntrada = tiposRegistrados.includes(ATTENDANCE_TYPES.ENTRADA);
+  const tieneSalida = tiposRegistrados.includes(ATTENDANCE_TYPES.SALIDA);
+
+  if (tieneSalida) {
+    return {
+      allowed: false,
+      msg: "El alumno ya registro entrada y salida hoy",
+    };
+  }
+
+  if (tieneEntrada) {
+    return {
+      allowed: true,
+      tipo: ATTENDANCE_TYPES.SALIDA,
+    };
+  }
+
+  return {
+    allowed: true,
+    tipo: ATTENDANCE_TYPES.ENTRADA,
+  };
+};
+
 export const registrarAsistenciaQR = async (req, res) => {
   try {
-    const { alumno: alumnoQR, sid_usuario, sid_instituto, tipo = "entrada" } = req.body || {};
+    const { alumno: alumnoQR, sid_usuario, sid_instituto } = req.body || {};
 
     if (!alumnoQR?.id_alumno || !sid_usuario) {
       return res.status(400).json({
@@ -53,13 +91,30 @@ export const registrarAsistenciaQR = async (req, res) => {
     }
 
     const alumnoPlain = alumno.toJSON ? alumno.toJSON() : alumno;
+    const fechaIngreso = today();
+    const asistenciasHoy = await Asistencia.findAll({
+      where: {
+        sid_alumno: alumnoPlain.id_alumno,
+        fecha_ingreso: fechaIngreso,
+      },
+      order: [["hora", "ASC"]],
+    });
+
+    const siguienteAsistencia = resolveNextAttendanceType(asistenciasHoy);
+
+    if (!siguienteAsistencia.allowed) {
+      return res.status(409).json({
+        status: "error",
+        msg: siguienteAsistencia.msg,
+      });
+    }
 
     const asistencia = await Asistencia.create({
       id_asistencia: generadorID(20),
       sid_alumno: alumnoPlain.id_alumno,
-      fecha_ingreso: today(),
+      fecha_ingreso: fechaIngreso,
       hora: currentTime(),
-      tipo,
+      tipo: siguienteAsistencia.tipo,
       leido: "no",
       sid_usuario,
     });
@@ -67,13 +122,15 @@ export const registrarAsistenciaQR = async (req, res) => {
     const nombreAlumno = [alumnoPlain.nombre, alumnoPlain.apellido]
       .filter(Boolean)
       .join(" ");
+    const tipoLabel =
+      siguienteAsistencia.tipo === ATTENDANCE_TYPES.SALIDA ? "salida" : "entrada";
 
     const pushResult = await sendPushToAlumnos({
       sidAlumnos: [alumnoPlain.id_alumno],
       title: "Asistencia registrada",
       body: nombreAlumno
-        ? `${nombreAlumno} registro asistencia.`
-        : "Se registro una asistencia.",
+        ? `${nombreAlumno} registro ${tipoLabel}.`
+        : `Se registro una ${tipoLabel}.`,
       tipoModulo: "asistencias",
       sidReferencia: asistencia.id_asistencia,
       data: {
@@ -82,6 +139,7 @@ export const registrarAsistenciaQR = async (req, res) => {
         sid_referencia: asistencia.id_asistencia,
         id_asistencia: asistencia.id_asistencia,
         sid_alumno: alumnoPlain.id_alumno,
+        tipo: siguienteAsistencia.tipo,
       },
     });
 
@@ -89,6 +147,7 @@ export const registrarAsistenciaQR = async (req, res) => {
       status: "ok",
       msg: "Asistencia registrada correctamente",
       id_asistencia: asistencia.id_asistencia,
+      tipo: siguienteAsistencia.tipo,
       alumno: {
         id_alumno: alumnoPlain.id_alumno,
         nombre: alumnoPlain.nombre,

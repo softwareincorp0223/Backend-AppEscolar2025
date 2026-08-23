@@ -4,6 +4,24 @@ import schema from "../validators/mensajeSchema.js";
 
 const crud = createCRUD(Mensaje, "id_mensaje");
 
+const normalizeOptionalDate = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const normalized = String(value).trim();
+
+  if (!normalized || normalized.toLowerCase() === "invalid date") {
+    return null;
+  }
+
+  return value;
+};
+
+const normalizeMensajeBody = (body) => ({
+  ...body,
+  fecha_fin: normalizeOptionalDate(body.fecha_fin),
+});
+
 export const getAll = crud.getAll;
 
 export const getById = crud.getById;
@@ -12,7 +30,7 @@ export const createOne = async (req, res) => {
   try {
 
     // VALIDAR
-    const { error, value } = schema.validate(req.body, {
+    const { error, value } = schema.validate(normalizeMensajeBody(req.body), {
       abortEarly: false,
     });
 
@@ -45,7 +63,7 @@ export const updateOne = async (req, res) => {
         field => field.optional()
     );
 
-    const { error, value } = updateSchema.validate(req.body, {
+    const { error, value } = updateSchema.validate(normalizeMensajeBody(req.body), {
         abortEarly: false
     });
 

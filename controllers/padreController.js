@@ -5,6 +5,28 @@ import { encryptQR } from "../helpers/cryptoQR.js";
 
 const crud = createCRUD(Padre, "id_padre");
 
+const normalizeOptionalDate = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? undefined : value;
+};
+
+const normalizePadreBody = (body) => {
+  const normalized = { ...body };
+  const creacion = normalizeOptionalDate(normalized.creacion);
+
+  if (creacion === undefined) {
+    delete normalized.creacion;
+  } else {
+    normalized.creacion = creacion;
+  }
+
+  return normalized;
+};
+
 //export const getAll = crud.getAll;
 
 export const getAll = async (req, res) => {
@@ -43,14 +65,14 @@ export const getAll = async (req, res) => {
 export const getById = crud.getById;
 
 export const createOne = async (req, res) => {
-  const { error, value } = schema.validate(req.body, { abortEarly: false });
+  const { error, value } = schema.validate(normalizePadreBody(req.body), { abortEarly: false });
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });
   req.body = value;
   return crud.createOne(req, res);
 };
 
 export const updateOne = async (req, res) => {
-  const { error, value } = schema.validate(req.body, { abortEarly: false });
+  const { error, value } = schema.validate(normalizePadreBody(req.body), { abortEarly: false });
   if (error) return res.status(400).json({ errors: error.details.map(d => d.message) });
   req.body = value;
   return crud.updateOne(req, res);

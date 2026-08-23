@@ -30,10 +30,23 @@ import { generadorID } from "../helpers/generadorID.js";
 const READ_VALUES = ["si", "SI", "Si", "1", 1, true, "true", "visto", "Visto"];
 const UNREAD_VALUES = ["no", "NO", "No", "0", 0, false, "false", null, ""];
 const ACTIVE_VALUES = ["si", "SI", "Si", "sí", "Sí", "1", 1, true, "true"];
+const QUICK_RESPONSE_VALUES = {
+  si: "respuesta_si",
+  no: "respuesta_no",
+};
 
 const isReadValue = (value) => READ_VALUES.includes(value);
 const isActiveValue = (value) => ACTIVE_VALUES.includes(value);
 const normalizeSiNo = (value) => (isActiveValue(value) ? "si" : "no");
+const normalizeQuickAnswer = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+
+  if (["respuesta_si", "respondio_si", "respondio:si"].includes(normalized)) return "si";
+  if (["respuesta_no", "respondio_no", "respondio:no"].includes(normalized)) return "no";
+  if (["no", "0", "false"].includes(normalized)) return "no";
+
+  return "";
+};
 
 const toPlain = (row) => (row?.toJSON ? row.toJSON() : row);
 
@@ -311,7 +324,7 @@ export const getMensajes = async (req, res) => {
         ...mensaje,
         tipo_mensaje: tipoById.get(mensaje.sid_tipo) || "",
         leido: asignacion.leido ?? mensaje.leido,
-        respuesta_rapida: asignacion.respuesta_rapida || "",
+        respuesta_rapida: normalizeQuickAnswer(asignacion.respuesta_rapida),
         permite_respuesta_rapida: normalizeSiNo(mensaje.respuesta_rapida),
         mensaje_programado: normalizeSiNo(mensaje.mensaje_programado),
         repetir: normalizeSiNo(mensaje.repetir),
@@ -356,7 +369,7 @@ export const responderMensaje = async (req, res) => {
     }
 
     const [updated] = await AsignarMensaje.update(
-      { respuesta_rapida: respuesta },
+      { respuesta_rapida: QUICK_RESPONSE_VALUES[respuesta] },
       { where: { sid_alumno: sidAlumno, sid_mensaje: id } }
     );
 
@@ -578,6 +591,7 @@ export const getCalificaciones = async (req, res) => {
       const calificacion = toPlain(row);
       return {
         id_evaluacion: calificacion.id_evaluacion,
+        id_alumno: calificacion.id_alumno,
         foto: calificacion.foto,
         ciclo: calificacion.ciclo,
         nombre_nivel: calificacion.nombre_nivel,
@@ -820,3 +834,6 @@ export const marcarVistos = async (req, res) => {
     return res.status(500).json({ error: "Error al marcar vistos" });
   }
 };
+
+
+

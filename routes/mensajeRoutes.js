@@ -13,7 +13,7 @@ const uploadArchivos = (req, res, next) => {
         if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
             return res.status(413).json({
                 ok: false,
-                message: "Cada archivo adjunto debe pesar 5 MB o menos.",
+                message: "Cada archivo adjunto debe pesar 10 MB o menos.",
             });
         }
 

@@ -1,5 +1,7 @@
 import Joi from "joi";
 
+const periodosMensaje = ["Diario", "Semanalmente", "Mensualmente", "Anualmente"];
+
 const schema = Joi.object({
   id_mensaje: Joi.string().allow("", null),
   receptor: Joi.string().required(),
@@ -18,7 +20,7 @@ const schema = Joi.object({
   fecha_envio: Joi.date().allow("", null),
   hora_envio: Joi.string().allow("", null),
   repetir: Joi.string().allow("", null),
-  periodo: Joi.string().allow("", null),
+  periodo: Joi.string().valid(...periodosMensaje).allow("", null),
   fecha_fin: Joi.date().allow("", null),
   leido: Joi.string().allow("", null),
   eliminado: Joi.string().allow("", null),
