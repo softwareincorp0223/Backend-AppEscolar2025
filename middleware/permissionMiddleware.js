@@ -6,17 +6,11 @@ import { getModuleKeysFromPermissions } from "../config/permissionModules.js";
 const routePermissions = {
   estadisticas: "estadisticas",
   instituto: "configuraciones",
-  nivel: "niveles",
-  grado: "niveles",
-  grupo: "niveles",
   ciclo: "niveles",
   ciclo_grado: "niveles",
-  usuario: "usuarios",
   vista_admin_estudiantes: "estudiantes",
   padre: "padres",
-  alumno: "estudiantes",
   alumno_ciclo: "estudiantes",
-  alumno_extracurricular: "extracurriculares",
   rol: "roles",
   privilegios: "roles",
   privilegios_rol: "roles",
@@ -31,7 +25,6 @@ const routePermissions = {
   vistaHistorialMensajes: "mensajes",
   vistaRegistroMensajes: "mensajes",
   vistaAsignarMensajeAlumno: "mensajes",
-  extracurricular: "extracurriculares",
   seguimiento: "seguimientos",
   atributo: "seguimientos",
   asignar_atributo: "seguimientos",
@@ -100,8 +93,8 @@ export const requireRoutePermission = (basePath) => {
 
         const activePrivileges = activePrivilegeIds.length
           ? await Privilegios.findAll({
-              where: { privilegios_id: activePrivilegeIds },
-            })
+            where: { privilegios_id: activePrivilegeIds },
+          })
           : [];
 
         const allowedModuleKeys = getModuleKeysFromPermissions(activePrivileges);
