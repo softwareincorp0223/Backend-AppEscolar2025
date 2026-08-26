@@ -4,6 +4,7 @@ import Privilegios from "../models/privilegios.js";
 import { getModuleKeysFromPermissions } from "../config/permissionModules.js";
 
 const routePermissions = {
+  //rutas
   estadisticas: "estadisticas",
   instituto: "configuraciones",
   ciclo: "niveles",
